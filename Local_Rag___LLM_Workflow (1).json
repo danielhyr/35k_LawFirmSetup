@@ -1,0 +1,207 @@
+{
+  "name": "Local Rag + LLM Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "command": "=python3 /app/rag_scripts/query_rag.py '{{ $json.body.question }}'"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        180,
+        20
+      ],
+      "id": "f1fa76e1-f7c4-419d-ae4e-89643902fde2",
+      "name": "Execute Command"
+    },
+    {
+      "parameters": {
+        "command": "python3 /app/rag_scripts/rag_setup.py"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        620,
+        -160
+      ],
+      "id": "c130bb9e-3260-498b-8d0a-233ce3da11dd",
+      "name": "Execute Command1"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "22398436-911c-4798-a801-789a7411d5e8",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -40,
+        20
+      ],
+      "id": "48b9050a-bded-49ea-a842-7699f836bb35",
+      "name": "Webhook",
+      "webhookId": "22398436-911c-4798-a801-789a7411d5e8"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "12REcE4IoV6zuiMySB-6h5PukLFPoopgX",
+          "mode": "list",
+          "cachedResultName": "LawFirmAI",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/12REcE4IoV6zuiMySB-6h5PukLFPoopgX"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -160
+      ],
+      "id": "91378987-2e08-4c0c-bb19-6caacb0b7ae7",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DaTtkEndNbVSzUjQ",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        180,
+        -160
+      ],
+      "id": "29fa2244-e65d-406b-b31c-3200e5c9b981",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "DaTtkEndNbVSzUjQ",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/app/docs/ {{ $json.name }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        400,
+        -160
+      ],
+      "id": "900b66d8-c60e-43d7-b0c1-c265cfdece69",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"answer\": \"{{ $json.stdout }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        400,
+        20
+      ],
+      "id": "efbba7dd-e154-4d1b-ac03-9e14af8dfb2e",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute Command": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Execute Command1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "af6db269-9be8-4205-8f25-dfd3c9f3ca07",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e79116f25704ef16e7affd777281588bcc92d9d70b1211d72c13fb2405dc7b49"
+  },
+  "id": "QvvkSYvddq5qjOAI",
+  "tags": []
+}
